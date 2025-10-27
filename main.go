@@ -26,8 +26,10 @@ var date = "unknown"
 var remote *url.URL
 var proxyUrl *url.URL
 
-var maxConcurrentRequests = 10
-var semaphore = make(chan struct{}, maxConcurrentRequests)
+var maxImageJobs uint
+var maxVideoJobs uint
+var imageSemaphore chan struct{}
+var videoSemaphore chan struct{}
 
 var showVersion bool
 var upstreamURL string
@@ -47,6 +49,8 @@ func init() {
 	viper.BindEnv("tasks_file")
 	viper.BindEnv("download_jpg_from_jxl")
 	viper.BindEnv("download_jpg_from_avif")
+	viper.BindEnv("max_image_jobs")
+	viper.BindEnv("max_video_jobs")
 
 	viper.SetDefault("upstream", "")
 	viper.SetDefault("listen", ":2284")
@@ -54,6 +58,8 @@ func init() {
 	viper.SetDefault("checksums_file", "checksums.csv")
 	viper.SetDefault("download_jpg_from_jxl", false)
 	viper.SetDefault("download_jpg_from_avif", false)
+	viper.SetDefault("max_image_jobs", 5)
+	viper.SetDefault("max_video_jobs", 1)
 
 	flag.BoolVar(&showVersion, "version", false, "Show the current version")
 	flag.StringVar(&upstreamURL, "upstream", viper.GetString("upstream"), "Upstream URL. Example: http://immich-server:2283")
@@ -62,6 +68,8 @@ func init() {
 	flag.StringVar(&checksumsFile, "checksums_file", viper.GetString("checksums_file"), "Path to the checksums file")
 	flag.BoolVar(&downloadJpgFromJxl, "download_jpg_from_jxl", viper.GetBool("download_jpg_from_jxl"), "Converts JXL images to JPG on download for wider compatibility")
 	flag.BoolVar(&downloadJpgFromAvif, "download_jpg_from_avif", viper.GetBool("download_jpg_from_avif"), "Converts AVIF images to JPG on download for wider compatibility")
+	flag.UintVar(&maxImageJobs, "max_image_jobs", viper.GetUint("max_image_jobs"), "Max number of image jobs running concurrently")
+	flag.UintVar(&maxVideoJobs, "max_video_jobs", viper.GetUint("max_video_jobs"), "Max number of video jobs running concurrently")
 	flag.Parse()
 
 	if showVersion {
@@ -72,6 +80,8 @@ func init() {
 	validateInput()
 
 	proxyUrl, _ = url.Parse("http://localhost:8080")
+	imageSemaphore = make(chan struct{}, maxImageJobs)
+	videoSemaphore = make(chan struct{}, maxVideoJobs)
 	initChecksums()
 }
 
