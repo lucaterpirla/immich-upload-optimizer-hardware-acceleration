@@ -6,12 +6,15 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"sync"
+	"sync/atomic"
 )
 
-var jobID int
+var jobIdCounter atomic.Int64
+var jobs sync.Map // map[string]int
 
 func newJob(r *http.Request, w http.ResponseWriter, logger *customLogger) error {
-	jobID++
+	jobID := jobIdCounter.Add(1)
 	jobLogger := newCustomLogger(logger, fmt.Sprintf("job %d: ", jobID))
 
 	formFile, formFileHeader, err := r.FormFile(filterFormKey)
@@ -21,7 +24,14 @@ func newJob(r *http.Request, w http.ResponseWriter, logger *customLogger) error 
 	defer r.MultipartForm.RemoveAll()
 	defer formFile.Close()
 
-	jobLogger.Printf("download original: \"%s\" (%s)", formFileHeader.Filename, humanReadableSize(formFileHeader.Size))
+	jobKey := fmt.Sprintf("\"%s\" (%s)", formFileHeader.Filename, humanReadableSize(formFileHeader.Size))
+	jobLogger.Printf("download original: %s", jobKey)
+	if id, exists := jobs.Load(jobKey); exists {
+		http.Error(w, "IUO is already processing this file. The app is re-uploading it because it's taking too long. No workaround is possible, just kill the app and wait", http.StatusInternalServerError)
+		return fmt.Errorf("a job processing this file already exists with ID: %d", id)
+	}
+	jobs.Store(jobKey, jobID)
+	defer jobs.Delete(jobKey)
 
 	var originalHash string
 	var newHash string
@@ -56,7 +66,7 @@ func newJob(r *http.Request, w http.ResponseWriter, logger *customLogger) error 
 	err = uploadUpstream(w, r, uploadFile, uploadFilename)
 	if err != nil {
 		jobLogger.Printf("upload upstream error: %s", err.Error())
-		http.Error(w, "failed to process file, view logs for more info", http.StatusInternalServerError)
+		http.Error(w, "failed to process file, view IUO logs for more info", http.StatusInternalServerError)
 	}
 	if uploadOriginal {
 		jobLogger.Printf("uploaded original: \"%s\" (%s)", formFileHeader.Filename, humanReadableSize(formFileHeader.Size))
