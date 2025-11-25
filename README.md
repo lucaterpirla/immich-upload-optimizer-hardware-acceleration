@@ -1,21 +1,22 @@
 # Immich Upload Optimizer [![goreleaser](https://github.com/joojoooo/immich-upload-optimizer/actions/workflows/release.yaml/badge.svg)](https://github.com/joojoooo/immich-upload-optimizer/actions/workflows/release.yaml)
-Immich Upload Optimizer (IOU) is a proxy designed to be placed in front of the [Immich](https://immich.app/) server. It intercepts file uploads and uses external CLI programs (by default: [AVIF](https://aomediacodec.github.io/av1-avif/), [JPEG-XL](https://jpegxl.info/), [FFmpeg](https://www.ffmpeg.org/)) to optimize, resize, or compress images and videos to save storage space
+This is a fork of . Immich Upload Optimizer (IOU) is a proxy designed to be placed in front of the [Immich](https://immich.app/) server. It intercepts file uploads and uses external CLI programs (by default: [AVIF](https://aomediacodec.github.io/av1-avif/), [JPEG-XL](https://jpegxl.info/), [FFmpeg](https://www.ffmpeg.org/)) to optimize, resize, or compress images and videos to save storage space. 
 
 ## ☕  Support the project
-Love this project? You can [support it on Ko-fi](https://ko-fi.com/joojooo) Every contribution makes a difference!
+Love this project? You can [support it on Ko-fi](https://ko-fi.com/lucaterpirla) Every contribution makes a difference!
 
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/joojooo)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N81P4F35)
 
-A special thanks to @kevinfiol and @timaschew . Your donations are what keep this project alive 💖
-
-test
+Your donations are what keep this project alive 💖
 
 ## 🎯 About
-This fork was created because the original author [doesn't welcome contributions](https://github.com/miguelangel-nubla/immich-upload-optimizer/pull/21) and [censors comments](https://github.com/miguelangel-nubla/immich-upload-optimizer/issues/15) instead of discussing. Here I can add features without having to convince or ask anyone for permission.
+This fork was created from [joojoooo/immich-upload-optimizer](https://github.com/joojoooo/immich-upload-optimizer) because the original image lacks the Intel GPU drivers and the libmfx1 library in ffmpeg which allow hardware accelerated video encoding with VAAPI or QSV.
+
 
 ## ✨ Features
 Features that differentiate this fork from the original project:
 
+- **Hardware Acceleration with VAAPI and QSV**
+  - The intel-media-va-driver and the libmfx1:amd64 library are necessary to have hardware acceleration working to speed up video encoding time.
 - **Longer disk lifespan**
   - Writes temporary files to RAM by default (tmpfs). Frequently writing to disk reduce its lifespan
   - Does less disk writes even with tmpfs disabled by not making useless copies of uploaded files
@@ -39,7 +40,7 @@ Edit your Immich Docker Compose file:
 ```yaml
 services:
   immich-upload-optimizer:
-    image: ghcr.io/joojoooo/immich-upload-optimizer:latest
+    image: ghcr.io/lucaterpirla/immich-upload-optimizer-hardware-acceleration:latest
     tmpfs:
       - /tempfs
     ports:
@@ -47,20 +48,21 @@ services:
     environment:
       - IUO_UPSTREAM=http://immich-server:2283
       - IUO_LISTEN=:2284
-      - IUO_TASKS_FILE=/etc/immich-upload-optimizer/config/lossy_avif.yaml
+      - IUO_TASKS_FILE=/etc/immich-upload-optimizer/config/lossy_jxl.yaml #change according to your preferred compression method
       #- IUO_CHECKSUMS_FILE=/IUO/checksums.csv # Uncomment after defining a volume
       - TMPDIR=/tempfs # Writes uploaded files in RAM to improve disk lifespan (Remove if running low on RAM)
       #- IUO_DOWNLOAD_JPG_FROM_JXL=true # Uncomment to enable JXL to JPG conversion
       #- IUO_DOWNLOAD_JPG_FROM_AVIF=true # Uncomment to enable AVIF to JPG conversion
     volumes:
       #- /path/to/your/host/dir:/IUO # Keep the checksums and tasks files between updates by defining a volume
+      #- /path/to/your/config/dir:/etc/immich-upload-optimizer/config
     restart: unless-stopped
     depends_on:
       - immich-server
 
   immich-server:
   # ...existing configuration...
-  # remove the ports section if you only want to access immich through the proxy.
+  # Remember to comment out or remove the ports in the immich-server container.
 ```
 Run the appropriate commands at the `docker-compose.yml` location to stop, update and start the container:
 ```sh
@@ -90,7 +92,7 @@ All flags are also available as environment variables using the prefix `IUO_` fo
 - Offers good compatibility: it's easy to view or share the image with others
 - Better than re-transcoding older formats (e.g., converting JPEG to a lower-quality JPEG)
 
-**[JPEG-XL](https://jpegxl.info/)** is a superior format to AVIF, has all AVIF's pros and more, except it lacks widespread compatibility 😔
+**[JPEG-XL](https://jpegxl.info/)(My personal choice)** is a superior format to AVIF, has all AVIF's pros and more, except it lacks widespread compatibility 😔
 - Can losslessly convert JPEG to save **~20%** in space without losing any quality
 - Support bit-accurate conversion back to the original JPEG
 - A lossy JXL option is also available with similar quality/size ratio to AVIF
@@ -105,14 +107,18 @@ If neither fits your needs, create your own conversion task: examples in [config
 ## 🎬 Videos
 Lossy **[H.265](wikipedia.org/wiki/High_Efficiency_Video_Coding)** CRF23 60fps is used by default to ensure storage savings even for short videos while maintaining the same perceived quality.
 
+Hardware GPU Acceleration is not the default choice!. To enable it, change the ffmpeg command in the conf files found in [config](config) and add arguments for VAAPI or QSV.
 All metadata is preserved and the video is not rotated (a different rotation than the original would cause viewing issues in the immich app)<br>
 Lowering FPS or audio quality isn't worth it, would only give negligible file size savings for a much worse output<br>
-It's recommended to only modify CRF and -preset speed to achieve the quality and speed you're after
+
+> [!NOTE]
+> Currently this image does not contain drivers for NVIDIA GPUs. Feel free to open a request.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details
 
 ## Acknowledgements
+- [joojoooo/immich-upload-optimizer](https://github.com/joojoooo/immich-upload-optimizer)
 - [JamesCullum/multipart-upload-proxy](https://github.com/JamesCullum/multipart-upload-proxy)
 - [libavif](https://github.com/AOMediaCodec/libavif)
 - [libjxl](https://github.com/libjxl/libjxl)
