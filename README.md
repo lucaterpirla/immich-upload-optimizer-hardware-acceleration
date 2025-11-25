@@ -8,6 +8,8 @@ Love this project? You can [support it on Ko-fi](https://ko-fi.com/joojooo) Ever
 
 A special thanks to @kevinfiol and @timaschew . Your donations are what keep this project alive 💖
 
+test
+
 ## 🎯 About
 This fork was created because the original author [doesn't welcome contributions](https://github.com/miguelangel-nubla/immich-upload-optimizer/pull/21) and [censors comments](https://github.com/miguelangel-nubla/immich-upload-optimizer/issues/15) instead of discussing. Here I can add features without having to convince or ask anyone for permission.
 
