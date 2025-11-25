@@ -107,7 +107,7 @@ If neither fits your needs, create your own conversion task: examples in [config
 ## 🎬 Videos
 Lossy **[H.265](wikipedia.org/wiki/High_Efficiency_Video_Coding)** CRF23 60fps is used by default to ensure storage savings even for short videos while maintaining the same perceived quality.
 
-Hardware GPU Acceleration is not the default choice!. To enable it, change the ffmpeg command in the conf files found in [config](config) and add arguments for VAAPI or QSV.
+Hardware GPU Acceleration is not enabled by default! To enable it, change the ffmpeg command in the conf files found in [config](config) and add arguments for VAAPI or QSV.
 All metadata is preserved and the video is not rotated (a different rotation than the original would cause viewing issues in the immich app)<br>
 Lowering FPS or audio quality isn't worth it, would only give negligible file size savings for a much worse output<br>
 
