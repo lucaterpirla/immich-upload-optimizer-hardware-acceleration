@@ -1,12 +1,10 @@
 # Immich Upload Optimizer with Intel HW Acceleration [![goreleaser](https://github.com/joojoooo/immich-upload-optimizer/actions/workflows/release.yaml/badge.svg)](https://github.com/joojoooo/immich-upload-optimizer/actions/workflows/release.yaml)
-This is a fork of Immich Upload Optimizer (IOU) is a proxy designed to be placed in front of the [Immich](https://immich.app/) server. It intercepts file uploads and uses external CLI programs (by default: [AVIF](https://aomediacodec.github.io/av1-avif/), [JPEG-XL](https://jpegxl.info/), [FFmpeg](https://www.ffmpeg.org/)) to optimize, resize, or compress images and videos to save storage space. 
+This is a fork of Immich Upload Optimizer (IOU) from joojoooo. It is a proxy designed to be placed in front of the [Immich](https://immich.app/) server. It intercepts file uploads and uses external CLI programs (by default: [AVIF](https://aomediacodec.github.io/av1-avif/), [JPEG-XL](https://jpegxl.info/), [FFmpeg](https://www.ffmpeg.org/)) to optimize, resize, or compress images and videos to save storage space. 
 
 ## ☕  Support the project
-Love this project? You can [support it on Ko-fi](https://ko-fi.com/lucaterpirla) Every contribution makes a difference!
+Do you find this useful? You can [support it on Ko-fi](https://ko-fi.com/lucaterpirla) Every contribution makes a difference 💖
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N81P4F35)
-
-Your donations are what keep this project alive 💖
 
 ## 🎯 About
 This fork was created from [joojoooo/immich-upload-optimizer](https://github.com/joojoooo/immich-upload-optimizer) because the original image lacks the Intel GPU drivers and the libmfx1 library in ffmpeg which allow hardware accelerated video encoding with VAAPI or QSV.
